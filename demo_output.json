@@ -1,0 +1,60 @@
+{
+  "ticket_id": "PROJ-42",
+  "pr_url": "https://github.com/demo-org/demo-repo/pull/17",
+  "overall": "Partial",
+  "requirements": [
+    {
+      "requirement": "User can POST to /auth/login with email and password and receive a JWT token",
+      "verdict": "Pass",
+      "evidence": "src/auth/login.py line 6 \u2014 jwt.encode() called with user.id and 24h expiry",
+      "confidence": 0.97
+    },
+    {
+      "requirement": "Invalid credentials must return HTTP 401 with an error message",
+      "verdict": "Pass",
+      "evidence": "src/auth/login.py line 4 \u2014 HTTPException(status_code=401) raised on bcrypt mismatch",
+      "confidence": 0.95
+    },
+    {
+      "requirement": "Protected routes must reject requests without a valid JWT token",
+      "verdict": "Pass",
+      "evidence": "src/auth/middleware.py line 3-4 \u2014 Missing token raises HTTP 401",
+      "confidence": 0.93
+    },
+    {
+      "requirement": "Tokens must expire after 24 hours",
+      "verdict": "Pass",
+      "evidence": "src/auth/login.py line 5 \u2014 timedelta(hours=24) passed to jwt.encode()",
+      "confidence": 0.98
+    },
+    {
+      "requirement": "Passwords must be hashed using bcrypt before storage",
+      "verdict": "Partial",
+      "evidence": "src/models/user.py stores password_hash column, bcrypt.checkpw() used in login \u2014 but no evidence of hashing on registration in this PR",
+      "confidence": 0.71
+    }
+  ],
+  "test_results": [
+    {
+      "test": "test_login_returns_jwt_token",
+      "result": "PASSED"
+    },
+    {
+      "test": "test_invalid_password_returns_401",
+      "result": "PASSED"
+    },
+    {
+      "test": "test_missing_token_rejected",
+      "result": "PASSED"
+    },
+    {
+      "test": "test_token_expiry_set_to_24h",
+      "result": "PASSED"
+    },
+    {
+      "test": "test_bcrypt_hash_on_registration",
+      "result": "FAILED \u2014 register endpoint not in PR scope"
+    }
+  ],
+  "evaluated_at": "2026-03-14T22:55:26.235967"
+}
