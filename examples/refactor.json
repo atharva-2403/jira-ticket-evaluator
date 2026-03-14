@@ -1,0 +1,11 @@
+{
+  "ticket_id": "PROJ-3",
+  "title": "Refactor user authentication logic",
+  "description": "Clean up the auth logic in middleware.py.\n\nAcceptance Criteria:\n- Remove redundant checks\n- Improve readability\n- No change in behavior",
+  "acceptance_criteria": [
+    "Remove redundant checks",
+    "Improve readability",
+    "No change in behavior"
+  ],
+  "ticket_type": "Task"
+}

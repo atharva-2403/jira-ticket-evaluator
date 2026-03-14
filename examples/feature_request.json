@@ -1,0 +1,11 @@
+{
+  "ticket_id": "PROJ-1",
+  "title": "Add user profile endpoint",
+  "description": "As a user, I want to be able to fetch my profile information via an API endpoint.\n\nAcceptance Criteria:\n- GET /api/v1/profile should return current user info\n- Return 401 if unauthorized\n- Response should include username and email",
+  "acceptance_criteria": [
+    "GET /api/v1/profile should return current user info",
+    "Return 401 if unauthorized",
+    "Response should include username and email"
+  ],
+  "ticket_type": "Story"
+}

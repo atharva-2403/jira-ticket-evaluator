@@ -1,0 +1,10 @@
+{
+  "ticket_id": "PROJ-2",
+  "title": "Fix division by zero in calculator",
+  "description": "The calculator crashes when dividing by zero.\n\nAcceptance Criteria:\n- Division by zero should return an error message\n- App should not crash",
+  "acceptance_criteria": [
+    "Division by zero should return an error message",
+    "App should not crash"
+  ],
+  "ticket_type": "Bug"
+}

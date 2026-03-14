@@ -1,0 +1,18 @@
+{
+  "pr_url": "https://github.com/example/repo/pull/3",
+  "title": "refactor: simplify auth middleware",
+  "description": "Simplified the auth middleware logic.",
+  "base_branch": "main",
+  "head_branch": "refactor/auth",
+  "diff": "diff --git a/middleware.py b/middleware.py\nindex ...\n-    if user and user.is_active:\n-        if user.has_perm('login'):\n-            return True\n+    if user and user.is_active and user.has_perm('login'):\n+        return True",
+  "files": [
+    {
+      "filename": "middleware.py",
+      "status": "modified",
+      "additions": 2,
+      "deletions": 3,
+      "patch": "@@ -5,3 +5,2 @@\n-    if user and user.is_active:\n-        if user.has_perm('login'):\n-            return True\n+    if user and user.is_active and user.has_perm('login'):\n+        return True"
+    }
+  ],
+  "commit_messages": ["refactor: simplify auth middleware"]
+}

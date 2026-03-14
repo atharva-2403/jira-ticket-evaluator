@@ -1,0 +1,18 @@
+{
+  "pr_url": "https://github.com/example/repo/pull/1",
+  "title": "feat: add profile endpoint",
+  "description": "Implemented the profile endpoint as requested.",
+  "base_branch": "main",
+  "head_branch": "feat/profile-api",
+  "diff": "diff --git a/app/routes.py b/app/routes.py\nindex ...\n+@app.route('/api/v1/profile')\n+def get_profile():\n+    if not current_user.is_authenticated:\n+        return jsonify({'error': 'Unauthorized'}), 401\n+    return jsonify({'username': current_user.username, 'email': current_user.email})",
+  "files": [
+    {
+      "filename": "app/routes.py",
+      "status": "modified",
+      "additions": 5,
+      "deletions": 0,
+      "patch": "@@ -10,3 +10,8 @@\n+@app.route('/api/v1/profile')\n+def get_profile():\n+    if not current_user.is_authenticated:\n+        return jsonify({'error': 'Unauthorized'}), 401\n+    return jsonify({'username': current_user.username, 'email': current_user.email})"
+    }
+  ],
+  "commit_messages": ["feat: add profile endpoint", "docs: update api spec"]
+}
