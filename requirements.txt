@@ -1,0 +1,8 @@
+anthropic
+requests
+python-dotenv
+pydantic
+pytest
+mypy
+ruff
+mcp
