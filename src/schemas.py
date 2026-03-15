@@ -1,41 +1,22 @@
-from typing import Literal, Optional
+from typing import Literal, List, Optional, Dict, Any
 from pydantic import BaseModel, Field
 from datetime import datetime, timezone
 
-class JiraTicket(BaseModel):
-    ticket_id: str
-    title: str
-    description: str
-    acceptance_criteria: list[str] = Field(default_factory=list)
-    ticket_type: Literal["Story", "Bug", "Task", "Sub-task", "Epic"] = "Story"
-
-class GitHubFile(BaseModel):
-    filename: str
-    status: str
-    additions: int
-    deletions: int
-    patch: Optional[str] = None
-
-class PullRequest(BaseModel):
-    pr_url: str
-    title: str
-    description: str
-    base_branch: str
-    head_branch: str
-    diff: str
-    files: list[GitHubFile]
-    commit_messages: list[str]
-
 class RequirementVerdict(BaseModel):
-    requirement: str
-    verdict: Literal["Pass", "Partial", "Fail"]
-    evidence: str           # file path + line number
-    confidence: float       # 0.0 to 1.0
+    """Structured verdict for a single requirement."""
+    requirement: str = Field(..., description="The text of the acceptance criterion")
+    verdict: Literal["Pass", "Partial", "Fail"] = Field(..., description="The compliance status")
+    evidence: str = Field(..., description="File path, line numbers, or code snippets proving the verdict")
+    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score from 0.0 to 1.0")
 
 class EvaluationResult(BaseModel):
-    ticket_id: str
-    pr_url: str
-    overall: Literal["Pass", "Partial", "Fail"]
-    requirements: list[RequirementVerdict]
-    test_results: Optional[list[dict]] = None
-    evaluated_at: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    """The final structured output of the PR evaluation."""
+    ticket_id: str = Field(..., description="The Jira ticket key (e.g., PROJ-123)")
+    pr_url: str = Field(..., description="The URL of the GitHub Pull Request")
+    overall: Literal["Pass", "Partial", "Fail"] = Field(..., description="The overall verdict for the PR")
+    requirements: List[RequirementVerdict] = Field(..., description="Detailed verdicts for each requirement")
+    test_results: Optional[List[Dict[str, Any]]] = Field(None, description="Results from automated test generation")
+    evaluated_at: str = Field(
+        default_factory=lambda: datetime.now(timezone.utc).isoformat(),
+        description="ISO 8601 timestamp of when the evaluation was performed"
+    )

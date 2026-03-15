@@ -1,105 +1,74 @@
 import os
 import requests
+from typing import Dict, Any, List
 from dotenv import load_dotenv
-from typing import Optional, List
-from src.schemas import PullRequest, GitHubFile
 
+# Search for .env in root and venv/
 load_dotenv()
+load_dotenv("venv/.env")
 
-class GitHubClient:
-    def __init__(self):
-        self.token = os.getenv("GITHUB_TOKEN")
-        if not self.token:
-            raise ValueError("Missing GITHUB_TOKEN in environment variables.")
-        
-        self.headers = {
-            "Authorization": f"token {self.token}",
-            "Accept": "application/vnd.github.v3+json"
-        }
+def fetch_pr(pr_url: str) -> Dict[str, Any]:
+    """
+    Fetches PR details from GitHub using the REST API.
+    Returns diff, files_changed, pr_description, and commit_messages.
+    """
+    token = os.getenv("GITHUB_TOKEN")
+    if not token:
+        raise ValueError("GITHUB_TOKEN must be set in .env")
 
-    def _parse_pr_url(self, pr_url: str):
-        """
-        Parses GitHub PR URL to extract owner, repo, and pull_number.
-        Example: https://github.com/owner/repo/pull/1
-        """
-        parts = pr_url.rstrip("/").split("/")
-        if "github.com" not in parts or "pull" not in parts:
-            raise ValueError(f"Invalid GitHub PR URL: {pr_url}")
-        
-        pull_index = parts.index("pull")
-        owner = parts[pull_index - 2]
-        repo = parts[pull_index - 1]
-        pull_number = parts[pull_index + 1]
-        
-        return owner, repo, pull_number
+    owner, repo, pull_number = _parse_pr_url(pr_url)
+    base_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}"
+    headers = {
+        "Authorization": f"token {token}",
+        "Accept": "application/vnd.github.v3+json"
+    }
 
-    def get_pull_request(self, pr_url: str) -> PullRequest:
-        """
-        Fetches PR details from GitHub and returns a PullRequest Pydantic model.
-        """
-        owner, repo, pull_number = self._parse_pr_url(pr_url)
-        base_api_url = f"https://api.github.com/repos/{owner}/{repo}/pulls/{pull_number}"
-        
-        # 1. Fetch PR Metadata
-        resp = requests.get(base_api_url, headers=self.headers)
-        resp.raise_for_status()
-        pr_data = resp.json()
-        
-        # 2. Fetch Files
-        files_url = f"{base_api_url}/files"
-        resp_files = requests.get(files_url, headers=self.headers)
-        resp_files.raise_for_status()
-        files_data = resp_files.json()
-        
-        files = [
-            GitHubFile(
-                filename=f["filename"],
-                status=f["status"],
-                additions=f["additions"],
-                deletions=f["deletions"],
-                patch=f.get("patch")
-            )
-            for f in files_data
-        ]
-        
-        # 3. Fetch Diff
-        diff_headers = self.headers.copy()
-        diff_headers["Accept"] = "application/vnd.github.v3.diff"
-        resp_diff = requests.get(base_api_url, headers=diff_headers)
-        resp_diff.raise_for_status()
-        diff = resp_diff.text
-        
-        # 4. Fetch Commits
-        commits_url = f"{base_api_url}/commits"
-        resp_commits = requests.get(commits_url, headers=self.headers)
-        resp_commits.raise_for_status()
-        commits_data = resp_commits.json()
-        commit_messages = [c["commit"]["message"] for c in commits_data]
-        
-        return PullRequest(
-            pr_url=pr_url,
-            title=pr_data.get("title", ""),
-            description=pr_data.get("body") or "",
-            base_branch=pr_data.get("base", {}).get("ref", ""),
-            head_branch=pr_data.get("head", {}).get("ref", ""),
-            diff=diff,
-            files=files,
-            commit_messages=commit_messages
-        )
+    # 1. Fetch Metadata
+    resp = requests.get(base_url, headers=headers)
+    resp.raise_for_status()
+    pr_data = resp.json()
+
+    # 2. Fetch Files Changed
+    resp_files = requests.get(f"{base_url}/files", headers=headers)
+    resp_files.raise_for_status()
+    files_changed = [f["filename"] for f in resp_files.json()]
+
+    # 3. Fetch Commit Messages
+    resp_commits = requests.get(f"{base_url}/commits", headers=headers)
+    resp_commits.raise_for_status()
+    commit_messages = [c["commit"]["message"] for c in resp_commits.json()]
+
+    # 4. Fetch Diff
+    diff_headers = headers.copy()
+    diff_headers["Accept"] = "application/vnd.github.v3.diff"
+    resp_diff = requests.get(base_url, headers=diff_headers)
+    resp_diff.raise_for_status()
+    diff = resp_diff.text
+
+    return {
+        "title": pr_data.get("title", ""),
+        "pr_description": pr_data.get("body") or "",
+        "files_changed": files_changed,
+        "commit_messages": commit_messages,
+        "diff": diff
+    }
+
+def _parse_pr_url(pr_url: str):
+    """Extracts owner, repo, and pull_number from a GitHub PR URL."""
+    parts = pr_url.rstrip("/").split("/")
+    # https://github.com/owner/repo/pull/123
+    if "github.com" not in parts or "pull" not in parts:
+        raise ValueError(f"Invalid GitHub PR URL: {pr_url}")
+    
+    pull_index = parts.index("pull")
+    owner = parts[pull_index - 2]
+    repo = parts[pull_index - 1]
+    pull_number = parts[pull_index + 1]
+    
+    return owner, repo, pull_number
 
 if __name__ == "__main__":
     import sys
-    import argparse
     import json
-    
-    parser = argparse.ArgumentParser(description="GitHub Client CLI")
-    parser.add_argument("--pr", required=True, help="GitHub PR URL")
-    args = parser.parse_args()
-    
-    try:
-        client = GitHubClient()
-        pr = client.get_pull_request(args.pr)
-        print(pr.model_dump_json(indent=2))
-    except Exception as e:
-        print(f"Error: {e}")
-        sys.exit(1)
+    if len(sys.argv) > 1:
+        print(json.dumps(fetch_pr(sys.argv[1]), indent=2))

@@ -1,10 +1,11 @@
 {
-  "ticket_id": "PROJ-2",
-  "title": "Fix division by zero in calculator",
-  "description": "The calculator crashes when dividing by zero.\n\nAcceptance Criteria:\n- Division by zero should return an error message\n- App should not crash",
+  "ticket_id": "PROJ-202",
+  "ticket_type": "Bug",
+  "title": "Fix memory leak in report generator",
+  "description": "The background job for generating PDF reports is causing a memory leak. After processing 10+ reports, the worker process is killed due to OOM.\n\nSteps to Reproduce:\n1. Start the report worker.\n2. Trigger 15 large PDF report generations.\n3. Observe memory usage climbing and not being released.",
   "acceptance_criteria": [
-    "Division by zero should return an error message",
-    "App should not crash"
-  ],
-  "ticket_type": "Bug"
+    "Memory usage must return to baseline (+/- 5%) after a report generation job completes.",
+    "The PDF generator buffer must be explicitly closed/cleared after each use.",
+    "Unit tests must verify no objects are leaked during processing."
+  ]
 }

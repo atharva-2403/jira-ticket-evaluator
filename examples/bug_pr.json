@@ -1,18 +1,14 @@
 {
-  "pr_url": "https://github.com/example/repo/pull/2",
-  "title": "fix: handle division by zero",
-  "description": "Added check for zero divisor.",
-  "base_branch": "main",
-  "head_branch": "fix/div-zero",
-  "diff": "diff --git a/calculator.py b/calculator.py\nindex ...\n-    return a / b\n+    if b == 0:\n+        return \"Error: Division by zero\"\n+    return a / b",
-  "files": [
-    {
-      "filename": "calculator.py",
-      "status": "modified",
-      "additions": 3,
-      "deletions": 1,
-      "patch": "@@ -5,1 +5,4 @@\n-    return a / b\n+    if b == 0:\n+        return \"Error: Division by zero\"\n+    return a / b"
-    }
+  "pr_url": "https://github.com/org/repo/pull/202",
+  "title": "fix: close pdf buffer to prevent memory leak",
+  "description": "Ensures the BytesIO buffer is closed and the canvas is deleted after report generation.",
+  "files_changed": [
+    "src/reports/generator.py",
+    "tests/test_leaks.py"
   ],
-  "commit_messages": ["fix: handle division by zero"]
+  "commit_messages": [
+    "fix: close buffer in generator",
+    "test: add memory leak regression test"
+  ],
+  "diff": "diff --git a/src/reports/generator.py b/src/reports/generator.py\n-    buffer = BytesIO()\n-    canvas = Canvas(buffer)\n+    try:\n+        buffer = BytesIO()\n+        canvas = Canvas(buffer)\n+    finally:\n+        buffer.close()\n+        del canvas"
 }

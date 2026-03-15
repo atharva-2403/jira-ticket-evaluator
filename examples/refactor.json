@@ -1,11 +1,11 @@
 {
-  "ticket_id": "PROJ-3",
-  "title": "Refactor user authentication logic",
-  "description": "Clean up the auth logic in middleware.py.\n\nAcceptance Criteria:\n- Remove redundant checks\n- Improve readability\n- No change in behavior",
+  "ticket_id": "PROJ-303",
+  "ticket_type": "Task",
+  "title": "Refactor Database Access Layer",
+  "description": "Current database calls are scattered across the routes. We need to centralize this into a repository pattern to improve testability and maintainability.",
   "acceptance_criteria": [
-    "Remove redundant checks",
-    "Improve readability",
-    "No change in behavior"
-  ],
-  "ticket_type": "Task"
+    "Move all raw SQL queries from 'routes.py' into a new 'repository.py' module.",
+    "Use dependency injection to provide the repository to the route handlers.",
+    "Ensure 100% test coverage for the new repository methods using an in-memory database."
+  ]
 }

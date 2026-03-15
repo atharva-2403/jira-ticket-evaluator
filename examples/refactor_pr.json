@@ -1,18 +1,16 @@
 {
-  "pr_url": "https://github.com/example/repo/pull/3",
-  "title": "refactor: simplify auth middleware",
-  "description": "Simplified the auth middleware logic.",
-  "base_branch": "main",
-  "head_branch": "refactor/auth",
-  "diff": "diff --git a/middleware.py b/middleware.py\nindex ...\n-    if user and user.is_active:\n-        if user.has_perm('login'):\n-            return True\n+    if user and user.is_active and user.has_perm('login'):\n+        return True",
-  "files": [
-    {
-      "filename": "middleware.py",
-      "status": "modified",
-      "additions": 2,
-      "deletions": 3,
-      "patch": "@@ -5,3 +5,2 @@\n-    if user and user.is_active:\n-        if user.has_perm('login'):\n-            return True\n+    if user and user.is_active and user.has_perm('login'):\n+        return True"
-    }
+  "pr_url": "https://github.com/org/repo/pull/303",
+  "title": "refactor: introduce repository pattern",
+  "description": "Moved SQL logic to repository.py and injected into routes.",
+  "files_changed": [
+    "src/database/repository.py",
+    "src/api/routes.py",
+    "tests/test_repository.py"
   ],
-  "commit_messages": ["refactor: simplify auth middleware"]
+  "commit_messages": [
+    "refactor: create UserRepository",
+    "feat: inject repo into routes",
+    "test: repo unit tests"
+  ],
+  "diff": "diff --git a/src/api/routes.py b/src/api/routes.py\n-    db.execute('SELECT * FROM users')\n+    return user_repo.get_all()\ndiff --git a/src/database/repository.py b/src/database/repository.py\n+class UserRepository:\n+    def get_all(self):\n+        return self.db.execute('SELECT * FROM users')"
 }

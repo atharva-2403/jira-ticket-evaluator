@@ -1,11 +1,11 @@
 {
-  "ticket_id": "PROJ-1",
-  "title": "Add user profile endpoint",
-  "description": "As a user, I want to be able to fetch my profile information via an API endpoint.\n\nAcceptance Criteria:\n- GET /api/v1/profile should return current user info\n- Return 401 if unauthorized\n- Response should include username and email",
+  "ticket_id": "PROJ-101",
+  "ticket_type": "Story",
+  "title": "Implement User Multi-Factor Authentication (MFA)",
+  "description": "To enhance security, users should be required to set up MFA using an authenticator app (TOTP). This should be required for all admin users and optional for regular users.",
   "acceptance_criteria": [
-    "GET /api/v1/profile should return current user info",
-    "Return 401 if unauthorized",
-    "Response should include username and email"
-  ],
-  "ticket_type": "Story"
+    "Users can enable MFA in their profile settings by scanning a QR code.",
+    "Login flow must prompt for a 6-digit TOTP code if MFA is enabled.",
+    "Admin users are blocked from accessing the dashboard until MFA is configured."
+  ]
 }

@@ -1,0 +1,226 @@
+JIRA TICKET EVALUATOR — FILE FINALIZATION CHECKLIST
+=====================================================
+Complete these in order. Check off each item as you finish.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ URGENT FIRST — FIX .env ISSUE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 1. Check .gitignore has .env listed
+        Run: cat ~/jira-ticket-evaluator/.gitignore
+        If .env is not listed, run:
+        echo ".env" >> ~/jira-ticket-evaluator/.gitignore
+
+[ ] 2. Remove .env from git tracking if it was committed
+        Run: git rm --cached .env
+        Run: git commit -m "remove .env from tracking"
+        Run: git push
+
+[ ] 3. Verify .env.example has blank values (not your real keys)
+        Run: cat ~/jira-ticket-evaluator/.env.example
+        Keys should look like: GROQ_API_KEY=
+        NOT like: GROQ_API_KEY=gsk_xxxxxxxxxxxxx
+
+[ ] 4. Verify .env has your real keys (this file stays local only)
+        Run: cat ~/jira-ticket-evaluator/.env
+        Should show all keys filled in with real values
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BLOCK 1 — ROOT FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 5. README.md
+        Must contain:
+        - Project overview (what it does)
+        - Setup instructions (clone, pip install, fill .env)
+        - How to run: python demo_run.py
+        - Architecture overview (text diagram of pipeline)
+        - Example output (paste from demo_run.py output)
+
+[ ] 6. .env.example
+        Must contain all key names with blank values
+        Example: GROQ_API_KEY=
+
+[ ] 7. requirements.txt
+        Must contain:
+        anthropic, requests, python-dotenv, pydantic,
+        pytest, mypy, ruff, mcp
+
+[ ] 8. demo_run.py
+        Already generated — verify it runs:
+        Run: python demo_run.py
+        Should print full verdict table with no errors
+
+[ ] 9. demo_output.json
+        Already generated — verify it exists:
+        Run: cat demo_output.json
+        Should show JSON with overall, requirements, test_results
+
+[ ] 10. GEMINI.md
+         Already exists — verify it is in root folder:
+         Run: ls ~/jira-ticket-evaluator/
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BLOCK 2 — src/ FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 11. src/schemas.py
+         Must contain:
+         - RequirementVerdict (Pydantic model)
+         - EvaluationResult (Pydantic model)
+         Minimum content: paste Pydantic schema from GEMINI.md
+
+[ ] 12. src/prompts.py
+         Must contain:
+         - TICKET_PARSER_PROMPT
+         - REQUIREMENTS_EXTRACTOR_PROMPT
+         - CODE_MATCHER_PROMPT
+         - TEST_GENERATOR_PROMPT
+         - VERDICT_SYNTHESIZER_PROMPT
+         Each as a named string constant
+
+[ ] 13. src/jira_client.py
+         Must contain:
+         - fetch_ticket(ticket_id) function
+         - Returns structured dict with title, description,
+           acceptance_criteria
+         - Loads JIRA_BASE_URL, JIRA_EMAIL, JIRA_API_TOKEN from .env
+
+[ ] 14. src/github_client.py
+         Must contain:
+         - fetch_pr(pr_url) function
+         - Returns diff, files_changed, pr_description
+         - Loads GITHUB_TOKEN from .env
+
+[ ] 15. src/jira_mcp_server.py
+         Must contain:
+         - get_ticket(ticket_id) MCP tool
+         - get_acceptance_criteria(ticket_id) MCP tool
+         - get_ticket_type(ticket_id) MCP tool
+
+[ ] 16. src/agent.py
+         Must contain:
+         - run_evaluation(ticket_id, pr_url) function
+         - Calls jira_client → github_client → LLM matcher
+           → test_generator → verdict synthesizer
+         - Returns EvaluationResult schema
+
+[ ] 17. src/test_generator.py
+         Must contain:
+         - generate_test(criterion, code_snippet) function
+         - Calls LLM to write pytest test
+         - Executes via subprocess
+         - Returns pass/fail + stdout/stderr
+
+[ ] 18. src/cli.py
+         Must contain:
+         - argparse with --ticket and --pr flags
+         - --json flag for raw output
+         - Calls agent.run_evaluation()
+         - Prints readable verdict table
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BLOCK 3 — tests/ FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 19. tests/test_schemas.py
+         Must contain:
+         - test_requirement_verdict_valid()
+         - test_evaluation_result_valid()
+         - test_invalid_verdict_rejected()
+
+[ ] 20. tests/test_jira_client.py
+         Must contain:
+         - test_fetch_ticket_returns_structured_data()
+         - test_fetch_ticket_invalid_id_raises_error()
+         All API calls mocked with unittest.mock
+
+[ ] 21. tests/test_github_client.py
+         Must contain:
+         - test_fetch_pr_returns_diff()
+         - test_fetch_pr_invalid_url_raises_error()
+         All API calls mocked with unittest.mock
+
+[ ] 22. tests/test_agent.py
+         Must contain:
+         - test_run_evaluation_returns_evaluation_result()
+         - test_partial_verdict_when_criteria_not_met()
+         All LLM calls mocked
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BLOCK 4 — examples/ FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 23. examples/feature_request.json
+         Sample feature ticket with 3 acceptance criteria
+
+[ ] 24. examples/bug_report.json
+         Sample bug ticket with reproduction steps
+
+[ ] 25. examples/refactor.json
+         Sample refactor ticket with code quality criteria
+
+[ ] 26. examples/feature_pr.json
+         Sample PR JSON matching feature_request.json
+
+[ ] 27. examples/bug_pr.json
+         Sample PR JSON matching bug_report.json
+
+[ ] 28. examples/refactor_pr.json
+         Sample PR JSON matching refactor.json
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BLOCK 5 — docs/ FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 29. docs/architecture.md
+         Must contain:
+         - Pipeline diagram in text/ASCII
+         - Description of each agent step
+         - Model used at each step and why
+         - MCP server integration explanation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ BLOCK 6 — FINAL CHECKS BEFORE PUSH
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+[ ] 30. Verify .env is NOT in the repo
+         Run: git status
+         .env must NOT appear in tracked files
+
+[ ] 31. Verify demo_run.py runs clean
+         Run: python demo_run.py
+         Must print full output with no errors
+
+[ ] 32. Verify requirements.txt is complete
+         Run: pip install -r requirements.txt
+         Must install with no errors
+
+[ ] 33. Final git push
+         Run: git add .
+         Run: git commit -m "finalize all project files"
+         Run: git push
+
+[ ] 34. Verify on GitHub
+         Open: https://github.com/atharva-2403/jira-ticket-evaluator
+         Check all folders and files are visible
+         Check README.md renders correctly on the homepage
+         Check .env is NOT visible in the repo
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ MINIMUM FILES NEEDED FOR PPT DEADLINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If you are out of time, make sure AT LEAST these are pushed:
+
+  ✅ demo_run.py
+  ✅ demo_output.json
+  ✅ requirements.txt
+  ✅ README.md
+  ✅ .env.example
+  ✅ GEMINI.md
+  ✅ src/schemas.py
+  ✅ docs/architecture.md
+
+These 8 files are enough to show the judges a working system,
+clean architecture, and proper project structure.

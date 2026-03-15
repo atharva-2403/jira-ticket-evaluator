@@ -1,66 +1,44 @@
 import pytest
+import requests
 from unittest.mock import patch, MagicMock
-from src.github_client import GitHubClient
-from src.schemas import PullRequest
+from src.github_client import fetch_pr
 
-@pytest.fixture
-def github_client():
+@patch('requests.get')
+def test_fetch_pr_returns_diff(mock_get):
+    """Verifies that fetch_pr correctly gathers PR data from multiple endpoints."""
+    # Setup mocks for metadata, files, commits, and diff
+    mock_meta = MagicMock()
+    mock_meta.json.return_value = {"title": "Fix bug", "body": "Fixed it."}
+    
+    mock_files = MagicMock()
+    mock_files.json.return_value = [{"filename": "main.py"}]
+    
+    mock_commits = MagicMock()
+    mock_commits.json.return_value = [{"commit": {"message": "fix: logic"}}]
+    
+    mock_diff = MagicMock()
+    mock_diff.text = "diff content"
+    
+    mock_get.side_effect = [mock_meta, mock_files, mock_commits, mock_diff]
+
     with patch.dict('os.environ', {"GITHUB_TOKEN": "test-token"}):
-        return GitHubClient()
+        data = fetch_pr("https://github.com/owner/repo/pull/1")
 
-def test_parse_pr_url(github_client):
-    owner, repo, pull = github_client._parse_pr_url("https://github.com/owner/repo/pull/123")
-    assert owner == "owner"
-    assert repo == "repo"
-    assert pull == "123"
+    assert data["title"] == "Fix bug"
+    assert data["files_changed"] == ["main.py"]
+    assert data["diff"] == "diff content"
+    assert "fix: logic" in data["commit_messages"]
 
-def test_get_pull_request_success(github_client):
-    # Mock PR metadata
-    mock_pr_resp = MagicMock()
-    mock_pr_resp.status_code = 200
-    mock_pr_resp.json.return_value = {
-        "title": "Fix Bug",
-        "body": "This PR fixes a bug.",
-        "base": {"ref": "main"},
-        "head": {"ref": "fix-branch"}
-    }
-    
-    # Mock Files
-    mock_files_resp = MagicMock()
-    mock_files_resp.status_code = 200
-    mock_files_resp.json.return_value = [
-        {"filename": "src/main.py", "status": "modified", "additions": 10, "deletions": 5, "patch": "@@ ..."}
-    ]
-    
-    # Mock Diff
-    mock_diff_resp = MagicMock()
-    mock_diff_resp.status_code = 200
-    mock_diff_resp.text = "diff --git a/src/main.py b/src/main.py..."
-    
-    # Mock Commits
-    mock_commits_resp = MagicMock()
-    mock_commits_resp.status_code = 200
-    mock_commits_resp.json.return_value = [
-        {"commit": {"message": "Fixing the bug"}}
-    ]
-    
-    def side_effect(url, headers=None):
-        if url.endswith("/123"):
-            if headers.get("Accept") == "application/vnd.github.v3.diff":
-                return mock_diff_resp
-            return mock_pr_resp
-        if url.endswith("/files"):
-            return mock_files_resp
-        if url.endswith("/commits"):
-            return mock_commits_resp
-        return MagicMock(status_code=404)
+def test_fetch_pr_invalid_url_raises_error():
+    """Verifies that an incorrectly formatted URL is caught early."""
+    with pytest.raises(ValueError, match="Invalid GitHub PR URL"):
+        fetch_pr("https://notgithub.com/bad/url")
 
-    with patch('requests.get', side_effect=side_effect):
-        pr = github_client.get_pull_request("https://github.com/owner/repo/pull/123")
-        
-        assert pr.title == "Fix Bug"
-        assert pr.base_branch == "main"
-        assert len(pr.files) == 1
-        assert pr.files[0].filename == "src/main.py"
-        assert "Fixing the bug" in pr.commit_messages
-        assert pr.diff.startswith("diff")
+@patch('requests.get')
+def test_fetch_pr_api_failure(mock_get):
+    """Verifies that GitHub API failures raise an exception."""
+    mock_get.return_value.raise_for_status.side_effect = requests.exceptions.HTTPError("401 Unauthorized")
+    
+    with patch.dict('os.environ', {"GITHUB_TOKEN": "test-token"}):
+        with pytest.raises(requests.exceptions.HTTPError):
+            fetch_pr("https://github.com/owner/repo/pull/1")
