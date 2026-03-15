@@ -7,3 +7,6 @@ __pycache__/
 .ruff_cache/
 demo_output.json
 .env
+CLAUDE.md
+GEMINI.md
+.gemini/
